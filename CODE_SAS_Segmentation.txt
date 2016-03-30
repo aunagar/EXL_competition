@@ -1,0 +1,49 @@
+/* Generated Code (IMPORT) */
+/* Source File: EXL.xlsx */
+/* Source Path: /folders/myshortcuts/myfolder */
+/* Code generated on: Wednesday, 27 January 2016 20:43:42 */
+
+%web_drop_table(WORK.IMPORT);
+
+
+FILENAME REFFILE "/folders/myshortcuts/myfolder/EXL2.xlsx" TERMSTR=CR;
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+	Sheet= "Sheet1";
+RUN;
+
+
+proc fastclus data=work.import maxclusters=100 conv=0 maxiter=500 out=prelim summary mean=mean cluster=preclus;
+	var IND_DEADBOLT_LOCKS: NUM_SAFETY_DEVICES:  PROPERTY_AGE: CAT_ZONE: INSURANCE_SCORE: IS_CA: IS_IL: IS_NJ: IS_TX: IS_A_B:	IS_A_C:	IS_A_D:	IS_A_E:	IS_CT_1: IS_CT_2: IS_CT_3: IS_CT_4: IS_CT_5: COVERAGE_BIN: IND_PRIOR_CLAIM: IND_SWIMMING_POOL: IND_UNDER_CONSTRUCTION:	IND_FIRE_PROTECT_SYSTEM: IND_ORIGINAL_ROOF: IND_SMOKE_ALARM: IND_SCHEDULED_PROPERTY: IND_PETS: IND_COASTAL_AREA;
+run;
+
+proc sort data=prelim;
+	by preclus;
+run;
+
+/*--- Define Clustering method for Hierarchichal Clustering ----*/
+%macro clus(method);
+
+	proc cluster data=mean method=&method print=50 plots(MAXPOINTS=100) RMSSTD ccc pseudo;
+		var IND_DEADBOLT_LOCKS: NUM_SAFETY_DEVICES:  PROPERTY_AGE: CAT_ZONE: INSURANCE_SCORE: IS_CA: IS_IL: IS_NJ: IS_TX: IS_A_B:	IS_A_C:	IS_A_D:	IS_A_E:	IS_CT_1: IS_CT_2: IS_CT_3: IS_CT_4: IS_CT_5: COVERAGE_BIN: IND_PRIOR_CLAIM: IND_SWIMMING_POOL: IND_UNDER_CONSTRUCTION:	IND_FIRE_PROTECT_SYSTEM: IND_ORIGINAL_ROOF: IND_SMOKE_ALARM: IND_SCHEDULED_PROPERTY: IND_PETS: IND_COASTAL_AREA;
+ 		copy preclus;
+ 	run;
+ 	
+ 	proc tree ncl=7 out=output noprint;
+		copy preclus: IND_DEADBOLT_LOCKS: NUM_SAFETY_DEVICES:  PROPERTY_AGE: CAT_ZONE: INSURANCE_SCORE: IS_CA: IS_IL: IS_NJ: IS_TX: IS_A_B:	IS_A_C:	IS_A_D:	IS_A_E:	IS_CT_1: IS_CT_2: IS_CT_3: IS_CT_4: IS_CT_5: COVERAGE_BIN: IND_PRIOR_CLAIM: IND_SWIMMING_POOL: IND_UNDER_CONSTRUCTION:	IND_FIRE_PROTECT_SYSTEM: IND_ORIGINAL_ROOF: IND_SMOKE_ALARM: IND_SCHEDULED_PROPERTY: IND_PETS: IND_COASTAL_AREA;
+ 	run;
+ 	
+ 	proc sort data=output;
+ 		by preclus;
+ 	run;
+ 	
+ 	data clus;
+ 		merge output prelim;
+ 		by preclus;
+ 	run;
+ %mend;
+ title 'Clustering by Ward Method';
+ %clus(ward);
